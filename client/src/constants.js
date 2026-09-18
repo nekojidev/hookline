@@ -1,14 +1,5 @@
-export const ARENA = {
-  width: 960,
-  height: 540,
-}
-
-export const RIVER = {
-  x: ARENA.width / 2 - 40,
-  width: 80,
-}
-
-export const FIXED_STEP = 1 / 50
-
+// Simulation constants (ARENA, FIXED_STEP, hook tuning, ...) now live in
+// hookline-shared — this file only keeps client-specific configuration that
+// has no meaning on the server.
 export const SERVER_URL = "ws://localhost:8080"
 export const DEFAULT_ROOM = "main"

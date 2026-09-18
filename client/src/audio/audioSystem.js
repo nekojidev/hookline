@@ -1,4 +1,4 @@
-import { gameEvents } from "../core/gameEvents.js"
+import { gameEvents } from "hookline-shared/src/gameEvents.js"
 
 const SFX_BY_EVENT = {
   "hook:fired": "hookFire",

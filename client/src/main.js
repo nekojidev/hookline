@@ -1,5 +1,6 @@
+import { ARENA } from "hookline-shared/src/constants.js"
 import { createAudioSystem } from "./audio/audioSystem.js"
-import { ARENA, SERVER_URL } from "./constants.js"
+import { SERVER_URL } from "./constants.js"
 import { connect } from "./net/connection.js"
 import { GameStateMachine } from "./state/GameStateMachine.js"
 import { createLoadingState } from "./state/LoadingState.js"
@@ -36,13 +37,13 @@ const connection = connect(SERVER_URL)
 
 const machine = new GameStateMachine()
 
-const playingState = createPlayingState({ ctx, dom })
+const playingState = createPlayingState({ ctx, dom, connection })
 
 const lobbyState = createLobbyState({
   dom,
   connection,
   getAudioSystem: () => audioSystem,
-  onStart: () => machine.transitionTo(playingState),
+  onStart: (slot) => machine.transitionTo(playingState, slot),
 })
 
 const loadingState = createLoadingState({

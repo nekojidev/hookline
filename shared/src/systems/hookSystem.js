@@ -1,14 +1,15 @@
-import { ARENA } from "../constants.js"
-import { gameEvents } from "../core/gameEvents.js"
+import {
+  ARENA,
+  HOOK_COOLDOWN,
+  HOOK_MAX_RANGE,
+  HOOK_SPEED,
+  PULL_SPEED,
+  RELEASE_DISTANCE,
+  TREE_DAMAGE,
+} from "../constants.js"
 import { Hook } from "../entities/Hook.js"
+import { gameEvents } from "../gameEvents.js"
 import { circlesOverlap } from "./collisionSystem.js"
-
-const HOOK_SPEED = 700 // px/s while flying
-const HOOK_MAX_RANGE = 480 // px
-const HOOK_COOLDOWN = 1.5 // s, starts counting the moment the hook is fired
-const PULL_SPEED = 900 // px/s, how fast the target is reeled in
-const RELEASE_DISTANCE = 34 // px, close enough to the owner to let go
-const TREE_DAMAGE = 15
 
 export function fireHook(manager, owner, angle) {
   if (

@@ -1,8 +1,4 @@
-import { ARENA } from "../constants.js"
-
-const ACCELERATION = 900 // px/s^2
-const FRICTION = 6 // exponential damping per second
-const MAX_SPEED = 220 // px/s
+import { ACCELERATION, ARENA, FRICTION, MAX_SPEED } from "../constants.js"
 
 export function updatePlayerMovement(player, command, dt) {
   const { transform, velocity, collider } = player

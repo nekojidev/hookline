@@ -4,10 +4,10 @@
 export class GameStateMachine {
   #current = null
 
-  transitionTo(state) {
+  transitionTo(state, ...args) {
     this.#current?.exit?.()
     this.#current = state
-    this.#current.enter?.()
+    this.#current.enter?.(...args)
   }
 
   update(dt) {

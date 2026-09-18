@@ -1,12 +1,20 @@
-import { ARENA, RIVER } from "../constants.js"
+import { ARENA, RIVER } from "hookline-shared/src/constants.js"
 
+// The client's local EntityManager only ever holds Player + Tree entities —
+// hook flight isn't predicted (see PlayingState), so there's no Hook entity
+// to query here. `player.hookVisual` is a plain annotation set from the
+// latest snapshot instead.
 export function renderScene(ctx, manager) {
   ctx.clearRect(0, 0, ARENA.width, ARENA.height)
   drawArena(ctx)
 
   for (const tree of manager.query("tree")) drawTree(ctx, tree)
-  for (const hook of manager.query("hook")) drawHook(ctx, manager, hook)
-  for (const player of manager.query("player")) drawPlayer(ctx, player)
+
+  const players = manager.query("player")
+  for (const player of players) {
+    if (player.hookVisual) drawHookVisual(ctx, player, player.hookVisual)
+  }
+  for (const player of players) drawPlayer(ctx, player)
 }
 
 function drawArena(ctx) {
@@ -30,26 +38,17 @@ function drawTree(ctx, tree) {
   ctx.fill()
 }
 
-function drawHook(ctx, manager, hook) {
-  const owner = manager.get(hook.ownerId)
-  if (owner) {
-    ctx.strokeStyle = "#cccccc"
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(owner.transform.x, owner.transform.y)
-    ctx.lineTo(hook.transform.x, hook.transform.y)
-    ctx.stroke()
-  }
+function drawHookVisual(ctx, owner, hookVisual) {
+  ctx.strokeStyle = "#cccccc"
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(owner.transform.x, owner.transform.y)
+  ctx.lineTo(hookVisual.x, hookVisual.y)
+  ctx.stroke()
 
   ctx.fillStyle = "#e0a458"
   ctx.beginPath()
-  ctx.arc(
-    hook.transform.x,
-    hook.transform.y,
-    hook.collider.radius,
-    0,
-    Math.PI * 2,
-  )
+  ctx.arc(hookVisual.x, hookVisual.y, 6, 0, Math.PI * 2)
   ctx.fill()
 }
 

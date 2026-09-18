@@ -24,6 +24,7 @@ export function createLobbyState({ dom, connection, getAudioSystem, onStart }) {
     else if (message.type === "chat")
       appendChatLine(`${message.from}: ${message.text}`)
     else if (message.type === "roster") renderRoster(message.members)
+    else if (message.type === "matchStart") onStart(message.yourSlot)
   }
 
   function handleJoinClick() {
@@ -41,11 +42,16 @@ export function createLobbyState({ dom, connection, getAudioSystem, onStart }) {
     dom.chatInput.value = ""
   }
 
+  // Only sends "ready" and waits — the actual transition to Playing happens
+  // in handleMessage() once the server pairs us with an opponent and tells
+  // us which slot we are via "matchStart".
   function handleStart() {
     const audioSystem = getAudioSystem()
     audioSystem.resume()
     audioSystem.startAmbient()
-    onStart()
+    connection.ready()
+    dom.startButton.disabled = true
+    dom.startButton.textContent = "Очікуємо суперника…"
   }
 
   return {
