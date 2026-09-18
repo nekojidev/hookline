@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { ARENA, MAX_SPEED } from "../constants.js"
+import { ARENA, MAX_SPEED, RIVER } from "../constants.js"
 import { Player } from "../entities/Player.js"
 import { updatePlayerMovement } from "./movementSystem.js"
 
@@ -139,5 +139,78 @@ describe("updatePlayerMovement", () => {
     }
 
     expect(boosted.velocity.vx).toBeGreaterThan(baseline.velocity.vx)
+  })
+
+  it("blocks walking into the river from the left bank", () => {
+    const player = createTestPlayer()
+    player.transform.x = RIVER.x - player.collider.radius - 5
+    player.transform.y = ARENA.height / 2
+
+    for (let i = 0; i < 50; i++) {
+      updatePlayerMovement(
+        player,
+        {
+          tick: 1,
+          moveX: 1,
+          moveY: 0,
+          fireHook: false,
+          useRot: false,
+          aimAngle: 0,
+        },
+        1 / 50,
+      )
+    }
+
+    expect(player.transform.x).toBeLessThanOrEqual(
+      RIVER.x - player.collider.radius,
+    )
+  })
+
+  it("blocks walking into the river from the right bank", () => {
+    const player = createTestPlayer()
+    player.transform.x = RIVER.x + RIVER.width + player.collider.radius + 5
+    player.transform.y = ARENA.height / 2
+
+    for (let i = 0; i < 50; i++) {
+      updatePlayerMovement(
+        player,
+        {
+          tick: 1,
+          moveX: -1,
+          moveY: 0,
+          fireHook: false,
+          useRot: false,
+          aimAngle: 0,
+        },
+        1 / 50,
+      )
+    }
+
+    expect(player.transform.x).toBeGreaterThanOrEqual(
+      RIVER.x + RIVER.width + player.collider.radius,
+    )
+  })
+
+  it("still allows free movement once clear of the river", () => {
+    const player = createTestPlayer()
+    player.transform.x = RIVER.x - player.collider.radius - 5
+    player.transform.y = ARENA.height / 2
+
+    updatePlayerMovement(
+      player,
+      {
+        tick: 1,
+        moveX: -1,
+        moveY: 0,
+        fireHook: false,
+        useRot: false,
+        aimAngle: 0,
+      },
+      1 / 50,
+    )
+
+    expect(player.transform.x).toBeLessThan(
+      RIVER.x - player.collider.radius - 5,
+    )
   })
 })
