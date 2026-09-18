@@ -21,8 +21,16 @@ export function updatePlayerMovement(player, command, dt) {
     velocity.vy *= scale
   }
 
-  transform.x = clamp(transform.x + velocity.vx * dt, collider.radius, ARENA.width - collider.radius)
-  transform.y = clamp(transform.y + velocity.vy * dt, collider.radius, ARENA.height - collider.radius)
+  transform.x = clamp(
+    transform.x + velocity.vx * dt,
+    collider.radius,
+    ARENA.width - collider.radius,
+  )
+  transform.y = clamp(
+    transform.y + velocity.vy * dt,
+    collider.radius,
+    ARENA.height - collider.radius,
+  )
   transform.angle = command.aimAngle
 }
 

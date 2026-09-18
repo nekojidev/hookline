@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hookline — Lab 2</title>
+    <title>Hookline — Lab 3</title>
     <style>
       html,
       body {
@@ -11,30 +11,50 @@
         height: 100%;
         background: #0d1117;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 12px;
         font-family: system-ui, sans-serif;
         color: #c9d1d9;
+      }
+      .screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .screen[hidden] {
+        display: none;
       }
       canvas {
         border: 2px solid #30363d;
         background: #1b2733;
       }
+      .progress-track {
+        width: 320px;
+        height: 10px;
+        background: #21262d;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: #e0a458;
+        transition: width 120ms ease-out;
+      }
       .controls {
         display: flex;
-        gap: 8px;
-        align-items: center;
+        gap: 16px;
         font-size: 14px;
       }
       button {
-        padding: 8px 16px;
+        padding: 8px 20px;
         cursor: pointer;
         background: #21262d;
         color: #c9d1d9;
         border: 1px solid #30363d;
         border-radius: 6px;
+        font-size: 14px;
       }
       button:hover {
         background: #30363d;
@@ -42,11 +62,26 @@
     </style>
   </head>
   <body>
-    <canvas id="game"></canvas>
-    <div class="controls">
-      <span>P1: WASD, Space — гачок</span>
-      <span>P2: стрілки, Enter — гачок</span>
-    </div>
+    <section id="loading-screen" class="screen">
+      <h1>Hookline</h1>
+      <div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div>
+      <span id="progress-label">Завантаження асетів…</span>
+      <button id="cancel-loading">Скасувати</button>
+    </section>
+
+    <section id="lobby-screen" class="screen" hidden>
+      <h1>Hookline</h1>
+      <div class="controls">
+        <span>P1: WASD, Space — гачок</span>
+        <span>P2: стрілки, Enter — гачок</span>
+      </div>
+      <button id="start-button">Почати гру</button>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <canvas id="game"></canvas>
+    </section>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

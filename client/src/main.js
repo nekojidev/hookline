@@ -1,62 +1,47 @@
-import { ARENA, FIXED_STEP, RIVER } from "./constants.js"
-import { createGameLoop } from "./core/loop.js"
-import { EntityManager } from "./entities/EntityManager.js"
-import { Player } from "./entities/Player.js"
-import { createTree } from "./entities/Tree.js"
-import { createInputSource } from "./input/inputToCommand.js"
-import { fireHook, updateHooks } from "./systems/hookSystem.js"
-import { updatePlayerMovement } from "./systems/movementSystem.js"
-import { renderScene } from "./systems/renderSystem.js"
+import { createAudioSystem } from "./audio/audioSystem.js"
+import { ARENA } from "./constants.js"
+import { GameStateMachine } from "./state/GameStateMachine.js"
+import { createLoadingState } from "./state/LoadingState.js"
+import { createLobbyState } from "./state/LobbyState.js"
+import { createPlayingState } from "./state/PlayingState.js"
+
+const dom = {
+  loadingScreen: document.querySelector("#loading-screen"),
+  progressBar: document.querySelector("#progress-bar"),
+  progressLabel: document.querySelector("#progress-label"),
+  cancelLoading: document.querySelector("#cancel-loading"),
+  lobbyScreen: document.querySelector("#lobby-screen"),
+  startButton: document.querySelector("#start-button"),
+  gameScreen: document.querySelector("#game-screen"),
+}
 
 const canvas = document.querySelector("#game")
 canvas.width = ARENA.width
 canvas.height = ARENA.height
 const ctx = canvas.getContext("2d")
 
-const manager = new EntityManager()
+// Created suspended — browsers block audio until a user gesture, which is
+// why resume() happens in the lobby's "start" click, not here.
+const audioContext = new AudioContext()
+let audioSystem = null
 
-const playerOne = manager.add(
-  new Player(ARENA.width / 4, ARENA.height / 2, { color: "#e0a458", label: "P1" }),
-)
-const playerTwo = manager.add(
-  new Player((ARENA.width / 4) * 3, ARENA.height / 2, { color: "#5aa9e6", label: "P2" }),
-)
+const machine = new GameStateMachine()
 
-const treeX = RIVER.x + RIVER.width / 2
-for (const treeY of [60, 150, 270, 390, 480]) {
-  manager.add(createTree(treeX, treeY))
-}
+const playingState = createPlayingState({ ctx, dom })
 
-const readCommandOne = createInputSource({
-  up: "KeyW",
-  down: "KeyS",
-  left: "KeyA",
-  right: "KeyD",
-  fire: "Space",
-})
-const readCommandTwo = createInputSource({
-  up: "ArrowUp",
-  down: "ArrowDown",
-  left: "ArrowLeft",
-  right: "ArrowRight",
-  fire: "Enter",
+const lobbyState = createLobbyState({
+  dom,
+  getAudioSystem: () => audioSystem,
+  onStart: () => machine.transitionTo(playingState),
 })
 
-function update(dt) {
-  const commandOne = readCommandOne(playerOne.transform.angle)
-  const commandTwo = readCommandTwo(playerTwo.transform.angle)
+const loadingState = createLoadingState({
+  audioContext,
+  dom,
+  onComplete: (buffers) => {
+    audioSystem = createAudioSystem(buffers)
+    machine.transitionTo(lobbyState)
+  },
+})
 
-  if (!playerOne.isHooked) updatePlayerMovement(playerOne, commandOne, dt)
-  if (!playerTwo.isHooked) updatePlayerMovement(playerTwo, commandTwo, dt)
-
-  if (commandOne.fireHook) fireHook(manager, playerOne, commandOne.aimAngle)
-  if (commandTwo.fireHook) fireHook(manager, playerTwo, commandTwo.aimAngle)
-
-  updateHooks(manager, dt)
-}
-
-function draw() {
-  renderScene(ctx, manager)
-}
-
-createGameLoop({ fixedStep: FIXED_STEP, update, render: draw }).start()
+machine.transitionTo(loadingState)

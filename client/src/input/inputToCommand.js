@@ -29,7 +29,8 @@ export function createInputSource({ up, down, left, right, fire }) {
       moveY *= Math.SQRT1_2
     }
 
-    const aimAngle = moveX === 0 && moveY === 0 ? currentAngle : Math.atan2(moveY, moveX)
+    const aimAngle =
+      moveX === 0 && moveY === 0 ? currentAngle : Math.atan2(moveY, moveX)
     const fireHook = firePressed.delete(fire)
 
     return { moveX, moveY, fireHook, aimAngle }

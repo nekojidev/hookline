@@ -1,4 +1,5 @@
 import { ARENA } from "../constants.js"
+import { gameEvents } from "../core/gameEvents.js"
 import { Hook } from "../entities/Hook.js"
 import { circlesOverlap } from "./collisionSystem.js"
 
@@ -10,7 +11,12 @@ const RELEASE_DISTANCE = 34 // px, close enough to the owner to let go
 const TREE_DAMAGE = 15
 
 export function fireHook(manager, owner, angle) {
-  if (owner.hookId !== null || owner.hookCooldownRemaining > 0 || !owner.isAlive()) return
+  if (
+    owner.hookId !== null ||
+    owner.hookCooldownRemaining > 0 ||
+    !owner.isAlive()
+  )
+    return
 
   const spawnDistance = owner.collider.radius + 8
   const hook = new Hook(
@@ -23,12 +29,18 @@ export function fireHook(manager, owner, angle) {
   manager.add(hook)
   owner.hookId = hook.id
   owner.hookCooldownRemaining = HOOK_COOLDOWN
+  gameEvents.dispatchEvent(
+    new CustomEvent("hook:fired", { detail: { ownerId: owner.id } }),
+  )
 }
 
 export function updateHooks(manager, dt) {
   for (const player of manager.query("player")) {
     if (player.hookCooldownRemaining > 0) {
-      player.hookCooldownRemaining = Math.max(0, player.hookCooldownRemaining - dt)
+      player.hookCooldownRemaining = Math.max(
+        0,
+        player.hookCooldownRemaining - dt,
+      )
     }
   }
 
@@ -51,6 +63,9 @@ function updateFlyingHook(manager, hook, dt) {
     hook.transform.y > ARENA.height
 
   if (outOfBounds || hook.travelled >= HOOK_MAX_RANGE) {
+    gameEvents.dispatchEvent(
+      new CustomEvent("hook:missed", { detail: { ownerId: hook.ownerId } }),
+    )
     releaseHook(manager, hook)
     return
   }
@@ -61,6 +76,11 @@ function updateFlyingHook(manager, hook, dt) {
       hook.phase = "attached"
       hook.targetId = player.id
       player.isHooked = true
+      gameEvents.dispatchEvent(
+        new CustomEvent("hook:attached", {
+          detail: { ownerId: hook.ownerId, targetId: player.id },
+        }),
+      )
       return
     }
   }

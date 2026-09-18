@@ -20,7 +20,13 @@ function drawArena(ctx) {
 function drawTree(ctx, tree) {
   ctx.fillStyle = "#3a5f3a"
   ctx.beginPath()
-  ctx.arc(tree.transform.x, tree.transform.y, tree.collider.radius, 0, Math.PI * 2)
+  ctx.arc(
+    tree.transform.x,
+    tree.transform.y,
+    tree.collider.radius,
+    0,
+    Math.PI * 2,
+  )
   ctx.fill()
 }
 
@@ -37,7 +43,13 @@ function drawHook(ctx, manager, hook) {
 
   ctx.fillStyle = "#e0a458"
   ctx.beginPath()
-  ctx.arc(hook.transform.x, hook.transform.y, hook.collider.radius, 0, Math.PI * 2)
+  ctx.arc(
+    hook.transform.x,
+    hook.transform.y,
+    hook.collider.radius,
+    0,
+    Math.PI * 2,
+  )
   ctx.fill()
 }
 
