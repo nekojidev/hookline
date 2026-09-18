@@ -2,5 +2,14 @@
   "name": "hookline-shared",
   "private": true,
   "version": "0.1.0",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  }
 }

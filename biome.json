@@ -18,6 +18,9 @@
   "javascript": {
     "formatter": {
       "semicolons": "asNeeded"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   }
 }

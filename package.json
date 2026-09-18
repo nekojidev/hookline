@@ -8,13 +8,15 @@
     "dev:server": "npm run dev -w server",
     "build": "npm run build -w client",
     "lint": "biome check .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4"
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^7.0.2"
   },
   "allowScripts": {
-    "esbuild@0.21.5": true,
-    "@biomejs/biome@1.9.4": true
+    "@biomejs/biome@1.9.4": true,
+    "esbuild@0.28.2": true
   }
 }

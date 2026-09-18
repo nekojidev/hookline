@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hookline — Lab 4</title>
+    <title>Hookline — Lab 6</title>
     <style>
       html,
       body {
@@ -105,6 +105,43 @@
       #chat-input {
         flex: 1;
       }
+      #game-screen {
+        position: relative;
+      }
+      #hud-root {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .hud {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: rgba(13, 17, 23, 0.7);
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        pointer-events: auto;
+      }
+      .hud-stats {
+        display: flex;
+        gap: 14px;
+      }
+      .shop {
+        display: flex;
+        gap: 6px;
+      }
+      .shop button {
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      .buy-message {
+        color: #e0a458;
+      }
     </style>
   </head>
   <body>
@@ -118,8 +155,7 @@
     <section id="lobby-screen" class="screen" hidden>
       <h1>Hookline</h1>
       <div class="controls">
-        <span>P1: WASD, Space — гачок</span>
-        <span>P2: стрілки, Enter — гачок</span>
+        <span>WASD — рух, миша — приціл, ЛКМ — гачок</span>
       </div>
 
       <div class="chat-panel">
@@ -140,8 +176,9 @@
 
     <section id="game-screen" class="screen" hidden>
       <canvas id="game"></canvas>
+      <div id="hud-root"></div>
     </section>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
