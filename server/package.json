@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx --watch src/main.ts",
     "start": "tsx src/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "load-test": "tsx scripts/load-test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.3",

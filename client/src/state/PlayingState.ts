@@ -33,6 +33,7 @@ import {
   createGameStateBridge,
 } from "../ui/gameStateBridge.js"
 import { mountHud } from "../ui/mountHud.js"
+import { createParticlePool } from "../vfx/particlePool.js"
 import type { GameState } from "./GameStateMachine.js"
 
 interface PendingInput extends MoveCommand {
@@ -62,6 +63,11 @@ export function createPlayingState({
   dom,
   connection,
 }: PlayingStateOptions): GameState {
+  // Created once for the lifetime of the app, not per-match — that's the
+  // point of pooling: the same fixed set of particle slots gets reused
+  // across every hook hit/miss for as long as the page lives.
+  const particlePool = createParticlePool()
+
   let manager: EntityManager
   let loop: ReturnType<typeof createGameLoop>
   let readCommand: ReadCommand
@@ -154,6 +160,7 @@ export function createPlayingState({
       gameEvents.dispatchEvent(
         new CustomEvent("hook:attached", { detail: { ownerId: player.id } }),
       )
+      particlePool.spawnBurst(slotData.hookX, slotData.hookY, 14, "#e0a458")
     } else if (
       previousPhase === HOOK_PHASE.FLYING &&
       newPhase === HOOK_PHASE.NONE
@@ -161,6 +168,7 @@ export function createPlayingState({
       gameEvents.dispatchEvent(
         new CustomEvent("hook:missed", { detail: { ownerId: player.id } }),
       )
+      particlePool.spawnBurst(slotData.hookX, slotData.hookY, 6, "#8b949e")
     }
 
     previousHookPhase.set(player.id, newPhase)
@@ -241,6 +249,8 @@ export function createPlayingState({
       (opponentTarget.y - opponentPlayer.transform.y) * OPPONENT_SMOOTHING
     opponentPlayer.transform.angle = opponentTarget.angle
 
+    particlePool.update(dt)
+
     tickCounter += 1
     if (tickCounter % HUD_UPDATE_EVERY_N_TICKS === 0) {
       hudBridge.set({
@@ -256,6 +266,7 @@ export function createPlayingState({
 
   function draw() {
     renderScene(ctx, manager, hookVisuals)
+    particlePool.draw(ctx)
   }
 
   return {

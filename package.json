@@ -9,10 +9,14 @@
     "build": "npm run build -w client",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client"
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client",
+    "test": "npm run test -w shared",
+    "test:e2e": "playwright test",
+    "load-test": "npm run load-test -w server"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@playwright/test": "^1.63.0",
     "typescript": "^7.0.2"
   },
   "allowScripts": {
