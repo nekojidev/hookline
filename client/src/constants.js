@@ -9,3 +9,6 @@ export const RIVER = {
 }
 
 export const FIXED_STEP = 1 / 50
+
+export const SERVER_URL = "ws://localhost:8080"
+export const DEFAULT_ROOM = "main"

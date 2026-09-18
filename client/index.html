@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hookline — Lab 3</title>
+    <title>Hookline — Lab 4</title>
     <style>
       html,
       body {
@@ -59,6 +59,52 @@
       button:hover {
         background: #30363d;
       }
+      input[type="text"] {
+        padding: 8px 10px;
+        background: #0d1117;
+        color: #c9d1d9;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .chat-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 360px;
+      }
+      .join-row {
+        display: flex;
+        gap: 8px;
+      }
+      .join-row input {
+        flex: 1;
+      }
+      #roster {
+        font-size: 13px;
+        color: #8b949e;
+      }
+      #chat-log {
+        list-style: none;
+        margin: 0;
+        padding: 8px;
+        height: 140px;
+        overflow-y: auto;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        font-size: 13px;
+      }
+      #chat-log li {
+        margin-bottom: 4px;
+      }
+      #chat-form {
+        display: flex;
+        gap: 8px;
+      }
+      #chat-input {
+        flex: 1;
+      }
     </style>
   </head>
   <body>
@@ -75,6 +121,20 @@
         <span>P1: WASD, Space — гачок</span>
         <span>P2: стрілки, Enter — гачок</span>
       </div>
+
+      <div class="chat-panel">
+        <div class="join-row">
+          <input id="player-name" type="text" maxlength="24" placeholder="Ваше ім'я" />
+          <button id="join-room">Приєднатися до кімнати</button>
+        </div>
+        <div id="roster">Не в кімнаті</div>
+        <ul id="chat-log"></ul>
+        <form id="chat-form">
+          <input id="chat-input" type="text" maxlength="280" placeholder="Повідомлення…" />
+          <button type="submit">Надіслати</button>
+        </form>
+      </div>
+
       <button id="start-button">Почати гру</button>
     </section>
 
