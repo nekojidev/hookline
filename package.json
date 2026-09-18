@@ -12,7 +12,8 @@
     "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w client",
     "test": "npm run test -w shared",
     "test:e2e": "playwright test",
-    "load-test": "npm run load-test -w server"
+    "load-test": "npm run load-test -w server",
+    "demo:record": "playwright test --config=demo.playwright.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

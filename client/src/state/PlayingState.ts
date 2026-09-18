@@ -195,10 +195,9 @@ export function createPlayingState({
     myPlayer.velocity.vx = 0
     myPlayer.velocity.vy = 0
 
-    while (
-      pendingInputs.length &&
-      pendingInputs[0]?.tick <= mine.ackInputTick
-    ) {
+    while (pendingInputs.length > 0) {
+      const oldest = pendingInputs[0]
+      if (!oldest || oldest.tick > mine.ackInputTick) break
       pendingInputs.shift()
     }
     if (!myPlayer.isHooked) {

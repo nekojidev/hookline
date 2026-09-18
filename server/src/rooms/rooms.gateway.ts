@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { Inject } from "@nestjs/common"
+import { Inject, Logger } from "@nestjs/common"
 import type {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -12,16 +12,31 @@ import {
 import { decodeInput } from "hookline-shared/src/protocol.js"
 import type WebSocket from "ws"
 import { MatchLogService } from "../match-log/match-log.service.js"
+import { MetricsService } from "../metrics/metrics.service.js"
+import { RateLimiter } from "../net/rateLimiter.js"
 import { Match, type NetId } from "../simulation/match.js"
 import { RoomManagerService } from "./room-manager.service.js"
 
 const DEFAULT_ROOM = "main"
+
+// Control messages (join/chat/ready/buyItem) are rare and human-paced —
+// 10/s with a small burst allowance is generous for a real client and
+// tight for a flood. Binary input frames are expected continuously at the
+// client's ~50Hz tick rate, so their bucket is sized around that with
+// headroom for jitter, not around "rare."
+const CONTROL_LIMITER_CAPACITY = 20
+const CONTROL_LIMITER_REFILL_PER_SECOND = 10
+const INPUT_LIMITER_CAPACITY = 100
+const INPUT_LIMITER_REFILL_PER_SECOND = 60
 
 interface ConnectionState {
   id: string
   roomId: string | null
   name: string | null
   netId: NetId | null
+  controlLimiter: RateLimiter
+  inputLimiter: RateLimiter
+  hasWarnedRateLimit: boolean
 }
 
 function safeJsonParse(text: string): unknown {
@@ -41,6 +56,7 @@ function safeJsonParse(text: string): unknown {
 export class RoomsGateway
   implements OnGatewayConnection<WebSocket>, OnGatewayDisconnect<WebSocket>
 {
+  private readonly logger = new Logger(RoomsGateway.name)
   private readonly connections = new WeakMap<WebSocket, ConnectionState>()
   private readonly readyQueues = new Map<string, WebSocket[]>()
   private readonly activeMatches = new Map<string, Match>()
@@ -52,6 +68,7 @@ export class RoomsGateway
   constructor(
     @Inject(RoomManagerService) private readonly rooms: RoomManagerService,
     @Inject(MatchLogService) private readonly matchLog: MatchLogService,
+    @Inject(MetricsService) private readonly metrics: MetricsService,
   ) {
     this.rooms.on(
       "playerJoined",
@@ -70,13 +87,24 @@ export class RoomsGateway
       roomId: null,
       name: null,
       netId: null,
+      controlLimiter: new RateLimiter(
+        CONTROL_LIMITER_CAPACITY,
+        CONTROL_LIMITER_REFILL_PER_SECOND,
+      ),
+      inputLimiter: new RateLimiter(
+        INPUT_LIMITER_CAPACITY,
+        INPUT_LIMITER_REFILL_PER_SECOND,
+      ),
+      hasWarnedRateLimit: false,
     })
+    this.metrics.clientConnected()
     client.on("message", (raw: Buffer, isBinary: boolean) =>
       this.handleMessage(client, raw, isBinary),
     )
   }
 
   handleDisconnect(client: WebSocket): void {
+    this.metrics.clientDisconnected()
     const state = this.connections.get(client)
     if (!state?.roomId) return
 
@@ -95,6 +123,7 @@ export class RoomsGateway
     if (match) {
       match.stop()
       this.activeMatches.delete(state.roomId)
+      this.metrics.matchStopped()
       room.broadcast({
         type: "system",
         text: "Матч перервано — суперник відключився",
@@ -111,6 +140,11 @@ export class RoomsGateway
     if (!state) return
 
     if (isBinary) {
+      if (!state.inputLimiter.tryConsume()) {
+        this.warnRateLimitOnce(state, "binary input")
+        return
+      }
+
       if (state.roomId === null || state.netId === null) return
       const match = this.activeMatches.get(state.roomId)
       if (!match) return
@@ -120,6 +154,11 @@ export class RoomsGateway
         raw.byteOffset + raw.byteLength,
       ) as ArrayBuffer
       match.queueInput(state.netId, decodeInput(arrayBuffer))
+      return
+    }
+
+    if (!state.controlLimiter.tryConsume()) {
+      this.warnRateLimitOnce(state, "control message")
       return
     }
 
@@ -136,6 +175,7 @@ export class RoomsGateway
       state.name = message.name
 
       const room = this.rooms.join(state.roomId, state.id, client, state.name)
+      this.logger.log(`${state.name} joined room ${state.roomId}`)
       this.send(client, {
         type: "joined",
         you: { id: state.id, name: state.name },
@@ -205,9 +245,22 @@ export class RoomsGateway
     const match = new Match([{ ws: wsA }, { ws: wsB }])
     this.activeMatches.set(roomId, match)
     match.start()
+    this.metrics.matchStarted()
+    this.logger.log(`Match started in room ${roomId}`)
 
     this.send(wsA, { type: "matchStart", yourSlot: 0 })
     this.send(wsB, { type: "matchStart", yourSlot: 1 })
+  }
+
+  private warnRateLimitOnce(state: ConnectionState, kind: string): void {
+    // Logged once per connection, not once per dropped message — a flood
+    // that trips the limiter would otherwise turn our own logging into a
+    // second flood.
+    if (state.hasWarnedRateLimit) return
+    state.hasWarnedRateLimit = true
+    this.logger.warn(
+      `Rate limit exceeded for ${kind} from connection ${state.id}`,
+    )
   }
 
   private send(client: WebSocket, message: ServerMessage): void {

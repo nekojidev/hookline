@@ -1,7 +1,7 @@
 import { ARENA } from "hookline-shared/src/constants.js"
 import type { AudioSystem } from "./audio/audioSystem.js"
 import { createAudioSystem } from "./audio/audioSystem.js"
-import { SERVER_URL } from "./constants.js"
+import { getServerUrl } from "./constants.js"
 import type { Dom } from "./dom.js"
 import { connect } from "./net/connection.js"
 import { GameStateMachine } from "./state/GameStateMachine.js"
@@ -43,7 +43,7 @@ if (!ctx) throw new Error("2D canvas context unavailable")
 const audioContext = new AudioContext()
 let audioSystem: AudioSystem | null = null
 
-const connection = connect(SERVER_URL)
+const connection = connect(getServerUrl())
 
 const machine = new GameStateMachine()
 
