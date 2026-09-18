@@ -12,6 +12,15 @@ export function Hud({ bridge, onBuy }: HudProps) {
 
   if (!state.visible) return null
 
+  if (state.respawnRemaining > 0) {
+    return (
+      <div className="hud hud-dead">
+        <span>Вас вбили гачком</span>
+        <span>Відродження через {Math.ceil(state.respawnRemaining)}с</span>
+      </div>
+    )
+  }
+
   return (
     <div className="hud">
       <div className="hud-stats">

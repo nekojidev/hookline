@@ -4,6 +4,7 @@ export interface HudSnapshot {
   gold: number
   hookCooldownRemaining: number
   hookCooldownTotal: number
+  respawnRemaining: number
   buyMessage: string | null
 }
 
@@ -13,6 +14,7 @@ export const INITIAL_HUD_SNAPSHOT: HudSnapshot = {
   gold: 0,
   hookCooldownRemaining: 0,
   hookCooldownTotal: 0,
+  respawnRemaining: 0,
   buyMessage: null,
 }
 

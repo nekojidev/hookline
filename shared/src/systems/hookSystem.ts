@@ -2,6 +2,7 @@ import {
   ARENA,
   GOLD_PER_HOOK_HIT,
   HOOK_COOLDOWN,
+  HOOK_KILL_DAMAGE,
   HOOK_MAX_RANGE,
   HOOK_SPEED,
   PULL_SPEED,
@@ -58,6 +59,13 @@ export function updateHooks(manager: EntityManager, dt: number): void {
     }
     if (player.regenPerSecond > 0 && player.isAlive()) {
       player.health = Math.min(100, player.health + player.regenPerSecond * dt)
+    }
+    if (player.respawnRemaining > 0) {
+      // <= 0, not === 0: repeatedly subtracting a float dt from a float
+      // countdown essentially never lands on exactly 0 bit-for-bit, so a
+      // strict equality check here means respawn() never fires.
+      player.respawnRemaining -= dt
+      if (player.respawnRemaining <= 0) player.respawn()
     }
   }
 
@@ -129,7 +137,18 @@ function updateAttachedHook(
   const distance = Math.hypot(dx, dy)
 
   if (distance <= RELEASE_DISTANCE) {
+    // Reeled all the way in to the owner — "given to the butcher," matching
+    // Pudge Wars: getting hooked is a death sentence, not just damage.
+    // Killing here (not on attach) is what keeps the pull physics and the
+    // tree-drag bonus damage below meaningful — the target has to actually
+    // arrive, not just get touched by the hook.
+    target.takeDamage(HOOK_KILL_DAMAGE)
     target.isHooked = false
+    gameEvents.dispatchEvent(
+      new CustomEvent("hook:killed", {
+        detail: { ownerId: owner.id, targetId: target.id },
+      }),
+    )
     releaseHook(manager, hook)
     return
   }

@@ -26,3 +26,10 @@ export const PULL_SPEED = 900 // px/s, how fast the target is reeled in
 export const RELEASE_DISTANCE = 34 // px, close enough to the owner to let go
 export const TREE_DAMAGE = 15
 export const GOLD_PER_HOOK_HIT = 25
+
+// Reeled all the way in to the owner = dead, matching Pudge Wars ("given to
+// the butcher") — not just damage. A finite large number, not Infinity:
+// Player.takeDamage() clamps via Math.max(0, health - amount), and
+// Infinity - anything is still Infinity, which would never clamp to 0.
+export const HOOK_KILL_DAMAGE = 999
+export const RESPAWN_DELAY = 3 // seconds

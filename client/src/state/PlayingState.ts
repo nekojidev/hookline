@@ -40,9 +40,14 @@ interface PendingInput extends MoveCommand {
   tick: number
 }
 
+// Pudge-green palette — two distinguishable shades of "rotting flesh"
+// rather than the old orange/blue, since players are meant to look like
+// Pudge, not like two unrelated colored dots. Must match server/simulation/
+// match.ts's SPAWN — same values, no shared import since it's rendering
+// config, not simulation-relevant data.
 const SPAWN = [
-  { x: ARENA.width / 4, color: "#e0a458", label: "P1" },
-  { x: (ARENA.width / 4) * 3, color: "#5aa9e6", label: "P2" },
+  { x: ARENA.width / 4, color: "#6b9c4f", label: "P1" },
+  { x: (ARENA.width / 4) * 3, color: "#4f8c8c", label: "P2" },
 ] as const
 
 // How fast the opponent's rendered position chases their latest snapshot —
@@ -176,6 +181,20 @@ export function createPlayingState({
     else hookVisuals.set(player.id, { x: slotData.hookX, y: slotData.hookY })
   }
 
+  // Derived from the health transition, not from hook phase — death can
+  // only come from being reeled in right now, but this way it isn't tied
+  // to hook logic specifically if another damage source ever exists.
+  function applyDeathTransition(player: Player, newHealth: number) {
+    if (player.isAlive() && newHealth <= 0) {
+      particlePool.spawnBurst(
+        player.transform.x,
+        player.transform.y,
+        24,
+        "#c94b4b",
+      )
+    }
+  }
+
   function applySnapshot(snapshot: ReturnType<typeof decodeSnapshot>) {
     const mine = snapshot.slots[mySlot]
     const theirs = snapshot.slots[opponentSlot]
@@ -186,12 +205,14 @@ export function createPlayingState({
     // of jumping backwards. Velocity isn't sent over the wire, so replay
     // rebuilds it from zero — converges within a tick or two since friction
     // damps hard, and snapshots arrive every ~20ms anyway.
+    applyDeathTransition(myPlayer, mine.health)
     myPlayer.transform.x = mine.x
     myPlayer.transform.y = mine.y
     myPlayer.transform.angle = mine.angle
     myPlayer.health = mine.health
     myPlayer.gold = mine.gold
     myPlayer.isHooked = mine.isHooked
+    myPlayer.respawnRemaining = mine.respawnRemaining
     myPlayer.velocity.vx = 0
     myPlayer.velocity.vy = 0
 
@@ -200,16 +221,18 @@ export function createPlayingState({
       if (!oldest || oldest.tick > mine.ackInputTick) break
       pendingInputs.shift()
     }
-    if (!myPlayer.isHooked) {
+    if (!myPlayer.isHooked && myPlayer.isAlive()) {
       for (const input of pendingInputs)
         updatePlayerMovement(myPlayer, input, FIXED_STEP)
     }
 
     // The opponent isn't predicted at all — health/isHooked are taken
     // as-is, position/angle are smoothed toward the new target in update().
+    applyDeathTransition(opponentPlayer, theirs.health)
     opponentTarget = { x: theirs.x, y: theirs.y, angle: theirs.angle }
     opponentPlayer.health = theirs.health
     opponentPlayer.isHooked = theirs.isHooked
+    opponentPlayer.respawnRemaining = theirs.respawnRemaining
 
     applyHookTransition(myPlayer, mine, true)
     applyHookTransition(opponentPlayer, theirs, false)
@@ -231,7 +254,8 @@ export function createPlayingState({
     const input: PendingInput = { tick: nextInputTick, ...command }
     nextInputTick += 1
 
-    if (!myPlayer.isHooked) updatePlayerMovement(myPlayer, input, dt)
+    if (!myPlayer.isHooked && myPlayer.isAlive())
+      updatePlayerMovement(myPlayer, input, dt)
     pendingInputs.push(input)
     connection.sendInput(encodeInput(input))
 
@@ -258,6 +282,7 @@ export function createPlayingState({
         gold: myPlayer.gold,
         hookCooldownRemaining,
         hookCooldownTotal: HOOK_COOLDOWN,
+        respawnRemaining: myPlayer.respawnRemaining,
         buyMessage,
       })
     }

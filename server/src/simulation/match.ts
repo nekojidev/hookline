@@ -37,9 +37,12 @@ export interface BuyResult {
   reason?: string
 }
 
+// Pudge-green palette — two distinguishable shades of "rotting flesh"
+// rather than the old orange/blue, since players are meant to look like
+// Pudge, not like two unrelated colored dots.
 const SPAWN = [
-  { x: ARENA.width / 4, color: "#e0a458", label: "P1" },
-  { x: (ARENA.width / 4) * 3, color: "#5aa9e6", label: "P2" },
+  { x: ARENA.width / 4, color: "#6b9c4f", label: "P1" },
+  { x: (ARENA.width / 4) * 3, color: "#4f8c8c", label: "P2" },
 ] as const
 
 // The one authoritative copy of the simulation for a single 1v1 match. Both
@@ -112,7 +115,7 @@ export class Match {
       if (!latest) continue
 
       const shouldFire = batch.some((input) => input.fireHook)
-      if (!slot.player.isHooked)
+      if (!slot.player.isHooked && slot.player.isAlive())
         updatePlayerMovement(slot.player, latest, FIXED_STEP)
       if (shouldFire) fireHook(this.#manager, slot.player, latest.aimAngle)
 
@@ -152,6 +155,7 @@ export class Match {
       hookPhase: hook.phase,
       hookX: hook.x,
       hookY: hook.y,
+      respawnRemaining: slot.player.respawnRemaining,
     }
   }
 

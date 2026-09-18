@@ -70,21 +70,50 @@ function drawHookVisual(
   ctx.fill()
 }
 
+// Chunky torso + head silhouette instead of a flat disc — a cheap way to
+// read as "hulking Pudge-shaped butcher" with zero art assets. The head
+// sits offset toward the facing angle, which doubles as the old
+// facing-direction line (a head where you're looking is more legible than
+// a thin stroke anyway).
 function drawPlayer(ctx: CanvasRenderingContext2D, player: Player): void {
   const { x, y, angle } = player.transform
   const radius = player.collider.radius
+  const alive = player.isAlive()
+  const bodyColor = alive ? player.color : "#555555"
 
-  ctx.fillStyle = player.isAlive() ? player.color : "#555555"
+  const headRadius = radius * 0.55
+  const headOffset = radius * 0.75
+  const headX = x + Math.cos(angle) * headOffset
+  const headY = y + Math.sin(angle) * headOffset
+
+  ctx.globalAlpha = alive ? 1 : 0.5
+
+  ctx.fillStyle = bodyColor
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Belly shading — a darker crescent low on the torso for a bit of volume.
+  ctx.fillStyle = "rgba(0, 0, 0, 0.18)"
+  ctx.beginPath()
+  ctx.arc(x, y + radius * 0.3, radius * 0.65, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.fillStyle = bodyColor
+  ctx.beginPath()
+  ctx.arc(headX, headY, headRadius, 0, Math.PI * 2)
   ctx.fill()
 
   ctx.strokeStyle = "#0d1117"
   ctx.lineWidth = 2
   ctx.beginPath()
-  ctx.moveTo(x, y)
-  ctx.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius)
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(headX, headY, headRadius, 0, Math.PI * 2)
+  ctx.stroke()
+
+  ctx.globalAlpha = 1
 
   drawHealthBar(ctx, player)
   drawLabel(ctx, player)

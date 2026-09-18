@@ -33,6 +33,7 @@ export interface SnapshotSlot {
   hookPhase: HookWirePhase
   hookX: number
   hookY: number
+  respawnRemaining: number
 }
 
 export interface Snapshot {
@@ -52,7 +53,8 @@ const SLOT_SIZE =
   1 + // isHooked
   1 + // hookPhase
   4 + // hookX
-  4 // hookY
+  4 + // hookY
+  1 // respawnRemaining, deciseconds
 export const SNAPSHOT_SIZE = 4 + SLOT_COUNT * SLOT_SIZE // + serverTick
 
 export function encodeSnapshot(snapshot: Snapshot): ArrayBuffer {
@@ -86,6 +88,8 @@ export function encodeSnapshot(snapshot: Snapshot): ArrayBuffer {
     offset += 4
     view.setFloat32(offset, slot.hookY)
     offset += 4
+    view.setUint8(offset, Math.round(slot.respawnRemaining * 10))
+    offset += 1
   }
 
   return buffer
@@ -122,6 +126,8 @@ export function decodeSnapshot(buffer: ArrayBuffer): Snapshot {
     offset += 4
     const hookY = view.getFloat32(offset)
     offset += 4
+    const respawnRemaining = view.getUint8(offset) / 10
+    offset += 1
 
     slots.push({
       connected,
@@ -135,6 +141,7 @@ export function decodeSnapshot(buffer: ArrayBuffer): Snapshot {
       hookPhase,
       hookX,
       hookY,
+      respawnRemaining,
     })
   }
 
