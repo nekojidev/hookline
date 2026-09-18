@@ -32,18 +32,31 @@ export function Hud({ bridge, onBuy }: HudProps) {
             ? `${state.hookCooldownRemaining.toFixed(1)}с`
             : "готовий"}
         </span>
+        {state.hasRot && (
+          <span>
+            Гниль (E):{" "}
+            {state.rotCooldownRemaining > 0
+              ? `${state.rotCooldownRemaining.toFixed(1)}с`
+              : "готова"}
+          </span>
+        )}
       </div>
       <div className="shop">
-        {SHOP_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onBuy(item.id)}
-            disabled={state.gold < item.cost}
-          >
-            {item.name} — {item.cost}💰
-          </button>
-        ))}
+        {SHOP_ITEMS.map((item) => {
+          const alreadyOwned = item.once && item.id === "rot" && state.hasRot
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onBuy(item.id)}
+              disabled={alreadyOwned || state.gold < item.cost}
+            >
+              {alreadyOwned
+                ? `${item.name} ✓`
+                : `${item.name} — ${item.cost}💰`}
+            </button>
+          )
+        })}
       </div>
       {state.buyMessage && (
         <div className="buy-message">{state.buyMessage}</div>

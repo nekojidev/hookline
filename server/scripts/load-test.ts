@@ -51,6 +51,7 @@ async function runBotPair(
           moveX: Math.random() * 2 - 1,
           moveY: Math.random() * 2 - 1,
           fireHook: Math.random() < 0.05,
+          useRot: Math.random() < 0.02,
           aimAngle: Math.random() * Math.PI * 2,
         }),
       )

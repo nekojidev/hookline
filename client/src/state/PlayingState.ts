@@ -3,6 +3,7 @@ import {
   FIXED_STEP,
   HOOK_COOLDOWN,
   RIVER,
+  ROT_COOLDOWN,
   TREE_Y_POSITIONS,
 } from "hookline-shared/src/constants.js"
 import { EntityManager } from "hookline-shared/src/entities/EntityManager.js"
@@ -195,6 +196,20 @@ export function createPlayingState({
     }
   }
 
+  // Same diffing trick as the hook transitions: Rot's activation is
+  // server-authoritative, so "just turned on" has to be read off two
+  // consecutive snapshots rather than predicted locally.
+  function applyRotTransition(player: Player, newActiveRemaining: number) {
+    if (player.rotActiveRemaining <= 0 && newActiveRemaining > 0) {
+      particlePool.spawnBurst(
+        player.transform.x,
+        player.transform.y,
+        18,
+        "#5c8a3a",
+      )
+    }
+  }
+
   function applySnapshot(snapshot: ReturnType<typeof decodeSnapshot>) {
     const mine = snapshot.slots[mySlot]
     const theirs = snapshot.slots[opponentSlot]
@@ -206,6 +221,7 @@ export function createPlayingState({
     // rebuilds it from zero — converges within a tick or two since friction
     // damps hard, and snapshots arrive every ~20ms anyway.
     applyDeathTransition(myPlayer, mine.health)
+    applyRotTransition(myPlayer, mine.rotActiveRemaining)
     myPlayer.transform.x = mine.x
     myPlayer.transform.y = mine.y
     myPlayer.transform.angle = mine.angle
@@ -213,6 +229,9 @@ export function createPlayingState({
     myPlayer.gold = mine.gold
     myPlayer.isHooked = mine.isHooked
     myPlayer.respawnRemaining = mine.respawnRemaining
+    myPlayer.hasRot = mine.hasRot
+    myPlayer.rotCooldownRemaining = mine.rotCooldownRemaining
+    myPlayer.rotActiveRemaining = mine.rotActiveRemaining
     myPlayer.velocity.vx = 0
     myPlayer.velocity.vy = 0
 
@@ -229,10 +248,12 @@ export function createPlayingState({
     // The opponent isn't predicted at all — health/isHooked are taken
     // as-is, position/angle are smoothed toward the new target in update().
     applyDeathTransition(opponentPlayer, theirs.health)
+    applyRotTransition(opponentPlayer, theirs.rotActiveRemaining)
     opponentTarget = { x: theirs.x, y: theirs.y, angle: theirs.angle }
     opponentPlayer.health = theirs.health
     opponentPlayer.isHooked = theirs.isHooked
     opponentPlayer.respawnRemaining = theirs.respawnRemaining
+    opponentPlayer.rotActiveRemaining = theirs.rotActiveRemaining
 
     applyHookTransition(myPlayer, mine, true)
     applyHookTransition(opponentPlayer, theirs, false)
@@ -264,6 +285,17 @@ export function createPlayingState({
       gameEvents.dispatchEvent(
         new CustomEvent("hook:fired", { detail: { ownerId: myPlayer.id } }),
       )
+      // A small muzzle-flash burst right at the moment of firing, distinct
+      // from the hit/miss bursts at the hook's far end — extra motion right
+      // where the player's own action happened, not just at the outcome.
+      particlePool.spawnBurst(
+        myPlayer.transform.x +
+          Math.cos(command.aimAngle) * myPlayer.collider.radius,
+        myPlayer.transform.y +
+          Math.sin(command.aimAngle) * myPlayer.collider.radius,
+        6,
+        "#cccccc",
+      )
     }
 
     opponentPlayer.transform.x +=
@@ -283,13 +315,16 @@ export function createPlayingState({
         hookCooldownRemaining,
         hookCooldownTotal: HOOK_COOLDOWN,
         respawnRemaining: myPlayer.respawnRemaining,
+        hasRot: myPlayer.hasRot,
+        rotCooldownRemaining: myPlayer.rotCooldownRemaining,
+        rotCooldownTotal: ROT_COOLDOWN,
         buyMessage,
       })
     }
   }
 
   function draw() {
-    renderScene(ctx, manager, hookVisuals)
+    renderScene(ctx, manager, hookVisuals, performance.now() / 1000)
     particlePool.draw(ctx)
   }
 

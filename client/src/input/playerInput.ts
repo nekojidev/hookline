@@ -6,6 +6,7 @@ import type { InputCommand } from "hookline-shared/src/protocol.js"
 // each browser controls exactly one networked player, so a real cursor aim
 // is both simpler and better.
 const MOVE_KEYS = { up: "KeyW", down: "KeyS", left: "KeyA", right: "KeyD" }
+const ROT_KEY = "KeyE"
 
 export type MoveCommand = Omit<InputCommand, "tick">
 export type ReadCommand = (originX: number, originY: number) => MoveCommand
@@ -15,8 +16,12 @@ export function createPlayerInput(canvas: HTMLCanvasElement): ReadCommand {
   let mouseX = canvas.width / 2
   let mouseY = canvas.height / 2
   let firePending = false
+  let rotPending = false
 
-  window.addEventListener("keydown", (event) => keysDown.add(event.code))
+  window.addEventListener("keydown", (event) => {
+    keysDown.add(event.code)
+    if (event.code === ROT_KEY) rotPending = true
+  })
   window.addEventListener("keyup", (event) => keysDown.delete(event.code))
 
   canvas.addEventListener("mousemove", (event) => {
@@ -45,7 +50,9 @@ export function createPlayerInput(canvas: HTMLCanvasElement): ReadCommand {
     const aimAngle = Math.atan2(mouseY - originY, mouseX - originX)
     const fireHook = firePending
     firePending = false
+    const useRot = rotPending
+    rotPending = false
 
-    return { moveX, moveY, fireHook, aimAngle }
+    return { moveX, moveY, fireHook, useRot, aimAngle }
   }
 }

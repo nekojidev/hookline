@@ -15,7 +15,14 @@ describe("updatePlayerMovement", () => {
     const player = createTestPlayer()
     updatePlayerMovement(
       player,
-      { tick: 1, moveX: 1, moveY: 0, fireHook: false, aimAngle: 0 },
+      {
+        tick: 1,
+        moveX: 1,
+        moveY: 0,
+        fireHook: false,
+        useRot: false,
+        aimAngle: 0,
+      },
       0.1,
     )
 
@@ -27,14 +34,28 @@ describe("updatePlayerMovement", () => {
     const player = createTestPlayer()
     updatePlayerMovement(
       player,
-      { tick: 1, moveX: 1, moveY: 0, fireHook: false, aimAngle: 0 },
+      {
+        tick: 1,
+        moveX: 1,
+        moveY: 0,
+        fireHook: false,
+        useRot: false,
+        aimAngle: 0,
+      },
       0.1,
     )
     const speedAfterAccel = player.velocity.vx
 
     updatePlayerMovement(
       player,
-      { tick: 1, moveX: 0, moveY: 0, fireHook: false, aimAngle: 0 },
+      {
+        tick: 1,
+        moveX: 0,
+        moveY: 0,
+        fireHook: false,
+        useRot: false,
+        aimAngle: 0,
+      },
       0.1,
     )
 
@@ -47,7 +68,14 @@ describe("updatePlayerMovement", () => {
     for (let i = 0; i < 200; i++) {
       updatePlayerMovement(
         player,
-        { tick: 1, moveX: 1, moveY: 0, fireHook: false, aimAngle: 0 },
+        {
+          tick: 1,
+          moveX: 1,
+          moveY: 0,
+          fireHook: false,
+          useRot: false,
+          aimAngle: 0,
+        },
         1 / 50,
       )
     }
@@ -63,7 +91,14 @@ describe("updatePlayerMovement", () => {
 
     updatePlayerMovement(
       player,
-      { tick: 1, moveX: -1, moveY: -1, fireHook: false, aimAngle: 0 },
+      {
+        tick: 1,
+        moveX: -1,
+        moveY: -1,
+        fireHook: false,
+        useRot: false,
+        aimAngle: 0,
+      },
       1,
     )
 
@@ -79,12 +114,26 @@ describe("updatePlayerMovement", () => {
     for (let i = 0; i < 30; i++) {
       updatePlayerMovement(
         baseline,
-        { tick: 1, moveX: 1, moveY: 0, fireHook: false, aimAngle: 0 },
+        {
+          tick: 1,
+          moveX: 1,
+          moveY: 0,
+          fireHook: false,
+          useRot: false,
+          aimAngle: 0,
+        },
         1 / 50,
       )
       updatePlayerMovement(
         boosted,
-        { tick: 1, moveX: 1, moveY: 0, fireHook: false, aimAngle: 0 },
+        {
+          tick: 1,
+          moveX: 1,
+          moveY: 0,
+          fireHook: false,
+          useRot: false,
+          aimAngle: 0,
+        },
         1 / 50,
       )
     }

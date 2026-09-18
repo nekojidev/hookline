@@ -29,6 +29,13 @@ export class Player extends Entity<"player"> {
   // happened to die.
   readonly spawnX: number
   readonly spawnY: number
+  // Rot: an unlockable active ability, not a passive multiplier — hasRot
+  // gates whether the input's useRot flag does anything at all.
+  hasRot: boolean
+  rotCooldownRemaining: number
+  rotActiveRemaining: number
+  // Server-side purchase bookkeeping only — never touches the wire.
+  readonly purchasedOnceItems = new Set<string>()
 
   constructor(x: number, y: number, { color, label }: PlayerOptions) {
     super("player", x, y, PLAYER_RADIUS)
@@ -45,6 +52,9 @@ export class Player extends Entity<"player"> {
     this.respawnRemaining = 0
     this.spawnX = x
     this.spawnY = y
+    this.hasRot = false
+    this.rotCooldownRemaining = 0
+    this.rotActiveRemaining = 0
   }
 
   takeDamage(amount: number) {
@@ -68,5 +78,7 @@ export class Player extends Entity<"player"> {
     this.hookCooldownRemaining = 0
     this.isHooked = false
     this.respawnRemaining = 0
+    this.rotCooldownRemaining = 0
+    this.rotActiveRemaining = 0
   }
 }

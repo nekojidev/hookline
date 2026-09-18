@@ -33,3 +33,11 @@ export const GOLD_PER_HOOK_HIT = 25
 // Infinity - anything is still Infinity, which would never clamp to 0.
 export const HOOK_KILL_DAMAGE = 999
 export const RESPAWN_DELAY = 3 // seconds
+
+// Rot — Pudge's actual second ability, not another passive stat tweak: an
+// AoE damage aura around the caster, toggled on for a few seconds at a
+// time. Bought once from the shop, then triggered on demand like the hook.
+export const ROT_COOLDOWN = 6 // s
+export const ROT_DURATION = 2.5 // s
+export const ROT_RADIUS = 70 // px
+export const ROT_DAMAGE_PER_SECOND = 20

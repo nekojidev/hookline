@@ -4,9 +4,9 @@
 //
 // Size comparison (why this exists): the JSON equivalent of one input frame
 // (`{"type":"input","tick":123,"moveX":0.71,"moveY":-0.71,"fireHook":false,
-// "aimAngle":1.5708}`) runs ~85-95 bytes as UTF-8 text. The binary frame
-// below is 11 bytes — about 8x smaller, and it's the packet sent every
-// single simulation tick (50/s) in both directions.
+// "useRot":false,"aimAngle":1.5708}`) runs ~95-105 bytes as UTF-8 text. The
+// binary frame below is 12 bytes — still roughly 8x smaller, and it's the
+// packet sent every single simulation tick (50/s) in both directions.
 
 // `as const` + a derived union instead of a TS `enum` — structural typing
 // over nominal, consistent with the rest of the protocol.
@@ -18,6 +18,7 @@ export interface InputCommand {
   moveX: number
   moveY: number
   fireHook: boolean
+  useRot: boolean
   aimAngle: number
 }
 
@@ -34,6 +35,9 @@ export interface SnapshotSlot {
   hookX: number
   hookY: number
   respawnRemaining: number
+  hasRot: boolean
+  rotCooldownRemaining: number
+  rotActiveRemaining: number
 }
 
 export interface Snapshot {
@@ -54,7 +58,10 @@ const SLOT_SIZE =
   1 + // hookPhase
   4 + // hookX
   4 + // hookY
-  1 // respawnRemaining, deciseconds
+  1 + // respawnRemaining, deciseconds
+  1 + // hasRot
+  1 + // rotCooldownRemaining, deciseconds
+  1 // rotActiveRemaining, deciseconds
 export const SNAPSHOT_SIZE = 4 + SLOT_COUNT * SLOT_SIZE // + serverTick
 
 export function encodeSnapshot(snapshot: Snapshot): ArrayBuffer {
@@ -89,6 +96,12 @@ export function encodeSnapshot(snapshot: Snapshot): ArrayBuffer {
     view.setFloat32(offset, slot.hookY)
     offset += 4
     view.setUint8(offset, Math.round(slot.respawnRemaining * 10))
+    offset += 1
+    view.setUint8(offset, slot.hasRot ? 1 : 0)
+    offset += 1
+    view.setUint8(offset, Math.round(slot.rotCooldownRemaining * 10))
+    offset += 1
+    view.setUint8(offset, Math.round(slot.rotActiveRemaining * 10))
     offset += 1
   }
 
@@ -128,6 +141,12 @@ export function decodeSnapshot(buffer: ArrayBuffer): Snapshot {
     offset += 4
     const respawnRemaining = view.getUint8(offset) / 10
     offset += 1
+    const hasRot = view.getUint8(offset) === 1
+    offset += 1
+    const rotCooldownRemaining = view.getUint8(offset) / 10
+    offset += 1
+    const rotActiveRemaining = view.getUint8(offset) / 10
+    offset += 1
 
     slots.push({
       connected,
@@ -142,6 +161,9 @@ export function decodeSnapshot(buffer: ArrayBuffer): Snapshot {
       hookX,
       hookY,
       respawnRemaining,
+      hasRot,
+      rotCooldownRemaining,
+      rotActiveRemaining,
     })
   }
 
@@ -149,7 +171,7 @@ export function decodeSnapshot(buffer: ArrayBuffer): Snapshot {
   return { serverTick, slots: [slotA, slotB] }
 }
 
-export const INPUT_SIZE = 4 + 1 + 1 + 1 + 4 // tick, moveX, moveY, fireHook, aimAngle
+export const INPUT_SIZE = 4 + 1 + 1 + 1 + 1 + 4 // tick, moveX, moveY, fireHook, useRot, aimAngle
 
 export function encodeInput(input: InputCommand): ArrayBuffer {
   const buffer = new ArrayBuffer(INPUT_SIZE)
@@ -163,6 +185,8 @@ export function encodeInput(input: InputCommand): ArrayBuffer {
   view.setInt8(offset, Math.round(input.moveY * 100))
   offset += 1
   view.setUint8(offset, input.fireHook ? 1 : 0)
+  offset += 1
+  view.setUint8(offset, input.useRot ? 1 : 0)
   offset += 1
   view.setFloat32(offset, input.aimAngle)
   offset += 4
@@ -182,8 +206,10 @@ export function decodeInput(buffer: ArrayBuffer): InputCommand {
   offset += 1
   const fireHook = view.getUint8(offset) === 1
   offset += 1
+  const useRot = view.getUint8(offset) === 1
+  offset += 1
   const aimAngle = view.getFloat32(offset)
   offset += 4
 
-  return { tick, moveX, moveY, fireHook, aimAngle }
+  return { tick, moveX, moveY, fireHook, useRot, aimAngle }
 }

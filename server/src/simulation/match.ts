@@ -21,6 +21,10 @@ import {
   updateHooks,
 } from "hookline-shared/src/systems/hookSystem.js"
 import { updatePlayerMovement } from "hookline-shared/src/systems/movementSystem.js"
+import {
+  activateRot,
+  updateRot,
+} from "hookline-shared/src/systems/rotSystem.js"
 import type WebSocket from "ws"
 
 export type NetId = 0 | 1
@@ -89,11 +93,15 @@ export class Match {
     const slot = this.#slots[netId]
     const item = findShopItem(itemId)
     if (!item) return { ok: false, reason: "unknown item" }
+    if (item.once && slot.player.purchasedOnceItems.has(itemId)) {
+      return { ok: false, reason: "already purchased" }
+    }
     if (slot.player.gold < item.cost)
       return { ok: false, reason: "not enough gold" }
 
     slot.player.gold -= item.cost
     item.apply(slot.player)
+    if (item.once) slot.player.purchasedOnceItems.add(itemId)
     return { ok: true }
   }
 
@@ -115,14 +123,17 @@ export class Match {
       if (!latest) continue
 
       const shouldFire = batch.some((input) => input.fireHook)
+      const shouldUseRot = batch.some((input) => input.useRot)
       if (!slot.player.isHooked && slot.player.isAlive())
         updatePlayerMovement(slot.player, latest, FIXED_STEP)
       if (shouldFire) fireHook(this.#manager, slot.player, latest.aimAngle)
+      if (shouldUseRot) activateRot(slot.player)
 
       slot.lastProcessedInputTick = latest.tick
     }
 
     updateHooks(this.#manager, FIXED_STEP)
+    updateRot(this.#manager, FIXED_STEP)
 
     this.#serverTick += 1
     this.#broadcastSnapshot()
@@ -156,6 +167,9 @@ export class Match {
       hookX: hook.x,
       hookY: hook.y,
       respawnRemaining: slot.player.respawnRemaining,
+      hasRot: slot.player.hasRot,
+      rotCooldownRemaining: slot.player.rotCooldownRemaining,
+      rotActiveRemaining: slot.player.rotActiveRemaining,
     }
   }
 
